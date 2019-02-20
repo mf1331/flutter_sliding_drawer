@@ -35,13 +35,14 @@ class DrawerControllerCustom extends StatefulWidget {
   /// Rarely used directly.
   ///
   /// The [child] argument must not be null and is typically a [Drawer].
-  const DrawerControllerCustom({
-    GlobalKey key,
-    @required this.child,
-    @required this.alignment,
-    this.controllerCallback,
-    this.drawerCallback,
-  })  : assert(child != null),
+  const DrawerControllerCustom(
+      {GlobalKey key,
+      @required this.child,
+      @required this.alignment,
+      this.controllerCallback,
+      this.drawerCallback,
+      @required this.width})
+      : assert(child != null),
         assert(alignment != null),
         super(key: key);
 
@@ -49,6 +50,7 @@ class DrawerControllerCustom extends StatefulWidget {
   ///
   /// Typically a [Drawer].
   final Widget child;
+  final double width;
 
   /// The alignment of the [Drawer].
   ///
@@ -77,8 +79,7 @@ class DrawerControllerCustomState extends State<DrawerControllerCustom>
         AnimationController(duration: _kBaseSettleDuration, vsync: this)
           ..addListener(_animationChanged)
           ..addStatusListener(_animationStatusChanged);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {});
   }
 
   @override
@@ -147,10 +148,14 @@ class DrawerControllerCustomState extends State<DrawerControllerCustom>
   final GlobalKey _drawerKey = GlobalKey();
   final GlobalKey _parentKey = GlobalKey();
 
+  // double get _width {
+  //   final RenderBox box = _drawerKey.currentContext?.findRenderObject();
+  //   if (box != null) return box.size.width;
+  //   return _kWidth; // drawer not being shown currently
+  // }
+
   double get _width {
-    final RenderBox box = _drawerKey.currentContext?.findRenderObject();
-    if (box != null) return box.size.width;
-    return _kWidth; // drawer not being shown currently
+    return MediaQuery.of(context).size.width;
   }
 
   bool _previouslyOpened = false;
@@ -159,13 +164,21 @@ class DrawerControllerCustomState extends State<DrawerControllerCustom>
     // if (_getOffsetParent >= _width + 1) {
     //   return;
     // }
-    if(!_isFistDragging){
+    if (!_isFistDragging) {
       _isFistDragging = true;
       var max = _maxWidthFactor;
     }
     // print(_getOffsetParent);
-    print('_move');
-    double delta = details.primaryDelta / _width;
+    double delta = details.primaryDelta / widget.width;
+
+    double test = (widget.width / _width) * 0.98;
+    print((widget.width / _width));
+    print('test => $test');
+    if (_controller.value >= test) {
+      _controller.value = test;
+      return;
+    }
+
     switch (DrawerAlignment.end) {
       case DrawerAlignment.start:
         break;
@@ -173,6 +186,7 @@ class DrawerControllerCustomState extends State<DrawerControllerCustom>
         delta = -delta;
         break;
     }
+
     switch (Directionality.of(context)) {
       case TextDirection.rtl:
         _controller.value -= delta;
@@ -200,6 +214,7 @@ class DrawerControllerCustomState extends State<DrawerControllerCustom>
       //   return;
       // }
       print('_settle');
+
       double visualVelocity = details.velocity.pixelsPerSecond.dx / _width;
       switch (widget.alignment) {
         case DrawerAlignment.start:
@@ -208,11 +223,23 @@ class DrawerControllerCustomState extends State<DrawerControllerCustom>
           visualVelocity = -visualVelocity;
           break;
       }
+
+      double test = (widget.width / _width) * 0.98;
+      print('visualVelocity => $visualVelocity');
+
       switch (Directionality.of(context)) {
         case TextDirection.rtl:
+          // if (_controller.value >= test) {
+          //   _controller.fling(velocity: -test);
+          //   return;
+          // }
           _controller.fling(velocity: -visualVelocity);
           break;
         case TextDirection.ltr:
+          // if (_controller.value >= test) {
+          //   _controller.fling(velocity: test);
+          //   return;
+          // }
           _controller.fling(velocity: visualVelocity);
           break;
       }
@@ -333,6 +360,7 @@ class DrawerControllerCustomState extends State<DrawerControllerCustom>
       );
     }
   }
+
 // Rect.fromLTRB(2.3, 2.3, 23.3, 637.7)
 // -2.3333333333333144
   Rect get _getOffsetParent {
@@ -347,13 +375,14 @@ class DrawerControllerCustomState extends State<DrawerControllerCustom>
   }
 
   double get _maxWidthFactor {
-    if(_getOffsetParent.width == 0.0){
+    if (_getOffsetParent.width == 0.0) {
       _isFistDragging = false;
       return 0;
     }
     for (double x = 0.0, i = 0.0; i <= 1.0; i += 0.1, x++) {
       i = -i;
-      var rect = Rect.fromLTRB(_getOffsetParent.left - i, _getOffsetParent.top - i, x + i, _getOffsetParent.bottom + i);
+      var rect = Rect.fromLTRB(_getOffsetParent.left - i,
+          _getOffsetParent.top - i, x + i, _getOffsetParent.bottom + i);
       if (rect.right.roundToDouble() == 250.0) {
         return i;
       }

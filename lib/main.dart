@@ -3,10 +3,12 @@ import 'dart:math';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:sliding_drawer_flutter/drawer_controller_custom.dart';
+import 'package:sliding_drawer_flutter/positioned_animation.dart';
 
 void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -14,7 +16,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: MyHomePage(title: 'Flutter Demo Home Page'),
+      home: MyHomePage(),
     );
   }
 }
@@ -64,6 +66,8 @@ class _MyHomePageState extends State<MyHomePage>
   @override
   Widget build(BuildContext context) {
     final sizeScreen = MediaQuery.of(context).size;
+
+    final mywidth = (MediaQuery.of(context).size.width/4)*3;
 
     final bool drawerIsStart = DrawerAlignment.end == DrawerAlignment.start;
     final EdgeInsets padding = MediaQuery.of(context).padding;
@@ -183,6 +187,7 @@ class _MyHomePageState extends State<MyHomePage>
             ),
           ),
           DrawerControllerCustom(
+            width: mywidth,
             // drawerCallback: (isOpend) {
             //   if (!isOpend && _value < 5.0) {
             //     setState(() {
@@ -202,16 +207,12 @@ class _MyHomePageState extends State<MyHomePage>
               });
             },
             alignment: DrawerAlignment.end,
-            child: OverflowBox(
-              maxWidth: 250,
-              alignment: FractionalOffset.centerLeft,
-              child: Container(
-                color: Colors.red,
-                width: 250,
-                child: Center(
-                  child: Text(
-                    'sliding drawer !',
-                  ),
+            child: Container(
+              color: Colors.red,
+              width: mywidth,
+              child: Center(
+                child: Text(
+                  'sliding drawer !',
                 ),
               ),
             ),
