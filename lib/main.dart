@@ -8,7 +8,6 @@ import 'package:sliding_drawer_flutter/positioned_animation.dart';
 void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -67,7 +66,7 @@ class _MyHomePageState extends State<MyHomePage>
   Widget build(BuildContext context) {
     final sizeScreen = MediaQuery.of(context).size;
 
-    final mywidth = (MediaQuery.of(context).size.width/4)*3;
+    final mywidth = (MediaQuery.of(context).size.width / 4) * 3;
 
     final bool drawerIsStart = DrawerAlignment.end == DrawerAlignment.start;
     final EdgeInsets padding = MediaQuery.of(context).padding;
@@ -77,43 +76,6 @@ class _MyHomePageState extends State<MyHomePage>
       dragAreaWidth = drawerIsStart ? padding.right : padding.left;
 
     dragAreaWidth = max(dragAreaWidth, 20.0);
-
-    var scaffold2 = Material(
-      child: Stack(
-        children: <Widget>[
-          Align(
-            alignment: AlignmentDirectional.centerStart,
-            child: Align(
-              alignment: AlignmentDirectional.centerEnd,
-              widthFactor: 1.0 - _controller.value,
-              child: SizedBox(
-                width: double.infinity,
-                height: double.infinity,
-                child: Container(
-                  color: Colors.red,
-                  child: Center(child: Text('drawer')),
-                ),
-              ),
-            ),
-          ),
-          Align(
-            alignment: AlignmentDirectional.centerEnd,
-            child: Align(
-              alignment: AlignmentDirectional.centerStart,
-              widthFactor: _controller.value,
-              child: SizedBox(
-                width: double.infinity,
-                height: double.infinity,
-                child: Container(
-                  color: Colors.amber,
-                  child: Center(child: Text('drawer')),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
 
     darwerLayout = Align(
       alignment: AlignmentDirectional.centerEnd,
@@ -180,30 +142,30 @@ class _MyHomePageState extends State<MyHomePage>
                 width: double.infinity,
                 height: double.infinity,
                 child: Container(
+                  alignment: AlignmentDirectional.centerEnd,
                   color: Colors.yellow,
-                  child: Center(child: Text('body')),
+                  child: Text('body'),
                 ),
               ),
             ),
           ),
           DrawerControllerCustom(
+            screenWidth: sizeScreen.width,
             width: mywidth,
-            // drawerCallback: (isOpend) {
-            //   if (!isOpend && _value < 5.0) {
-            //     setState(() {
-            //       _value = 0.0;
-            //     });
-            //   } else if (isOpend) {
-            //     setState(() {
-            //       _value = 1.0;
-            //     });
-            //   }
-            // },
+            drawerCallback: (isOpend) {
+              // if (!isOpend && _value < (mywidth / sizeScreen.width) / 2) {
+              //   setState(() {
+              //     _value = 0.0;
+              //   });
+              // } else if (isOpend) {
+              //   setState(() {
+              //     _value = 1.0;
+              //   });
+              // }
+            },
             controllerCallback: (value) {
               setState(() {
-                // if(_size == 0.0) return;
                 _value = value;
-                print('value => $value');
               });
             },
             alignment: DrawerAlignment.end,

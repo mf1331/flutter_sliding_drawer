@@ -41,6 +41,7 @@ class DrawerControllerCustom extends StatefulWidget {
       @required this.alignment,
       this.controllerCallback,
       this.drawerCallback,
+      this.screenWidth,
       @required this.width})
       : assert(child != null),
         assert(alignment != null),
@@ -51,6 +52,7 @@ class DrawerControllerCustom extends StatefulWidget {
   /// Typically a [Drawer].
   final Widget child;
   final double width;
+  final double screenWidth;
 
   /// The alignment of the [Drawer].
   ///
@@ -75,10 +77,13 @@ class DrawerControllerCustomState extends State<DrawerControllerCustom>
   @override
   void initState() {
     super.initState();
-    _controller =
-        AnimationController(duration: _kBaseSettleDuration, vsync: this)
-          ..addListener(_animationChanged)
-          ..addStatusListener(_animationStatusChanged);
+    _controller = AnimationController(
+        lowerBound: 0.0,
+        upperBound: (widget.width / widget.screenWidth),
+        duration: _kBaseSettleDuration,
+        vsync: this)
+      ..addListener(_animationChanged)
+      ..addStatusListener(_animationStatusChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {});
   }
 
@@ -138,46 +143,20 @@ class DrawerControllerCustomState extends State<DrawerControllerCustom>
 
   void _handleDragCancel() {
     if (_controller.isDismissed || _controller.isAnimating) return;
-    if (_controller.value < 0.5) {
+    if (_controller.value < (widget.width / widget.screenWidth) / 2) {
       close();
     } else {
-      // open();
+      open();
     }
   }
 
   final GlobalKey _drawerKey = GlobalKey();
   final GlobalKey _parentKey = GlobalKey();
 
-  // double get _width {
-  //   final RenderBox box = _drawerKey.currentContext?.findRenderObject();
-  //   if (box != null) return box.size.width;
-  //   return _kWidth; // drawer not being shown currently
-  // }
-
-  double get _width {
-    return MediaQuery.of(context).size.width;
-  }
-
   bool _previouslyOpened = false;
 
   void _move(DragUpdateDetails details) {
-    // if (_getOffsetParent >= _width + 1) {
-    //   return;
-    // }
-    if (!_isFistDragging) {
-      _isFistDragging = true;
-      var max = _maxWidthFactor;
-    }
-    // print(_getOffsetParent);
     double delta = details.primaryDelta / widget.width;
-
-    double test = (widget.width / _width) * 0.98;
-    print((widget.width / _width));
-    print('test => $test');
-    if (_controller.value >= test) {
-      _controller.value = test;
-      return;
-    }
 
     switch (DrawerAlignment.end) {
       case DrawerAlignment.start:
@@ -200,7 +179,10 @@ class DrawerControllerCustomState extends State<DrawerControllerCustom>
       widget.controllerCallback(_controller.value);
     }
 
-    final bool opened = _controller.value > 0.5 ? true : false;
+    final bool opened =
+        _controller.value > ((widget.width / widget.screenWidth) / 2)
+            ? true
+            : false;
     if (opened != _previouslyOpened && widget.drawerCallback != null)
       widget.drawerCallback(opened);
     _previouslyOpened = opened;
@@ -210,12 +192,7 @@ class DrawerControllerCustomState extends State<DrawerControllerCustom>
     if (_controller.isDismissed) return;
 
     if (details.velocity.pixelsPerSecond.dx.abs() >= _kMinFlingVelocity) {
-      // if (_getOffsetParent >= _width + 1) {
-      //   return;
-      // }
-      print('_settle');
-
-      double visualVelocity = details.velocity.pixelsPerSecond.dx / _width;
+      double visualVelocity = details.primaryVelocity / widget.width;
       switch (widget.alignment) {
         case DrawerAlignment.start:
           break;
@@ -224,29 +201,18 @@ class DrawerControllerCustomState extends State<DrawerControllerCustom>
           break;
       }
 
-      double test = (widget.width / _width) * 0.98;
-      print('visualVelocity => $visualVelocity');
-
       switch (Directionality.of(context)) {
         case TextDirection.rtl:
-          // if (_controller.value >= test) {
-          //   _controller.fling(velocity: -test);
-          //   return;
-          // }
           _controller.fling(velocity: -visualVelocity);
           break;
         case TextDirection.ltr:
-          // if (_controller.value >= test) {
-          //   _controller.fling(velocity: test);
-          //   return;
-          // }
           _controller.fling(velocity: visualVelocity);
           break;
       }
-    } else if (_controller.value < 0.5) {
+    } else if (_controller.value < ((widget.width / widget.screenWidth) / 2)) {
       close();
     } else {
-      // open();
+      open();
     }
   }
 
@@ -255,6 +221,7 @@ class DrawerControllerCustomState extends State<DrawerControllerCustom>
   /// Typically called by [ScaffoldState.openDrawer].
   void open() {
     _controller.fling(velocity: 1.0);
+    if (widget.controllerCallback != null) widget.controllerCallback(1.0);
     if (widget.drawerCallback != null) widget.drawerCallback(true);
   }
 
@@ -265,8 +232,6 @@ class DrawerControllerCustomState extends State<DrawerControllerCustom>
     if (widget.drawerCallback != null) widget.drawerCallback(false);
   }
 
-  final ColorTween _color =
-      ColorTween(begin: Colors.transparent, end: Colors.black54);
   final GlobalKey _gestureDetectorKey = GlobalKey();
 
   AlignmentDirectional get _drawerOuterAlignment {
@@ -339,13 +304,13 @@ class DrawerControllerCustomState extends State<DrawerControllerCustom>
         excludeFromSemantics: true,
         child: RepaintBoundary(
           child: Align(
-            alignment: AlignmentDirectional.centerEnd,
+            alignment: _drawerOuterAlignment,
             child: Align(
               key: _parentKey,
               widthFactor: _controller.value,
-              alignment: AlignmentDirectional.centerStart,
+              alignment: _drawerInnerAlignment,
               child: Align(
-                alignment: AlignmentDirectional.centerStart,
+                alignment: _drawerInnerAlignment,
                 child: RepaintBoundary(
                   child: FocusScope(
                     key: _drawerKey,
@@ -359,35 +324,6 @@ class DrawerControllerCustomState extends State<DrawerControllerCustom>
         ),
       );
     }
-  }
-
-// Rect.fromLTRB(2.3, 2.3, 23.3, 637.7)
-// -2.3333333333333144
-  Rect get _getOffsetParent {
-    final RenderBox box = _parentKey.currentContext?.findRenderObject();
-    if (box != null) {
-      var dis = box.paintBounds;
-
-      print('disparent = > ' + dis.toString());
-      return dis;
-    }
-    return Rect.fromLTRB(0, 0, 0, 0);
-  }
-
-  double get _maxWidthFactor {
-    if (_getOffsetParent.width == 0.0) {
-      _isFistDragging = false;
-      return 0;
-    }
-    for (double x = 0.0, i = 0.0; i <= 1.0; i += 0.1, x++) {
-      i = -i;
-      var rect = Rect.fromLTRB(_getOffsetParent.left - i,
-          _getOffsetParent.top - i, x + i, _getOffsetParent.bottom + i);
-      if (rect.right.roundToDouble() == 250.0) {
-        return i;
-      }
-    }
-    return 0;
   }
 
   @override
