@@ -4,16 +4,16 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-const double _kWidth = 304.0;
 const double _kEdgeDragWidth = 20.0;
 const double _kMinFlingVelocity = 365.0;
 const Duration _kBaseSettleDuration = Duration(milliseconds: 246);
-bool _isFistDragging = false;
+const Duration _kBaseDelayDuration = Duration(milliseconds: 30);
 
 /// Signature for the callback that's called when a [DrawerControllerCustom] is
 /// opened or closed.
 typedef DrawerCallback = void Function(bool isOpened);
 typedef ControllerCallback = void Function(double value);
+typedef FlingCallback = void Function(double velocity);
 
 /// Provides interactive behavior for [Drawer] widgets.
 ///
@@ -32,7 +32,7 @@ typedef ControllerCallback = void Function(double value);
 class DrawerControllerCustom extends StatefulWidget {
   /// Creates a _controller for a [Drawer].
   ///
-  /// Rarely used directly.
+  /// Rarely used directly.ae.mgnlasdnthlmszdfmhn.,sfmgjnsxfh/nj,xd/f,hmjnd,.xfh/mj,x/fgh,/x,.hnZdhnsrn u sdru jrtyitdi kdty itijkws46uve56ub5iun5euinr67ir6i67ir
   ///
   /// The [child] argument must not be null and is typically a [Drawer].
   const DrawerControllerCustom(
@@ -41,6 +41,7 @@ class DrawerControllerCustom extends StatefulWidget {
       @required this.alignment,
       this.controllerCallback,
       this.drawerCallback,
+      this.flingCallback,
       this.screenWidth,
       @required this.width})
       : assert(child != null),
@@ -65,6 +66,8 @@ class DrawerControllerCustom extends StatefulWidget {
 
   final ControllerCallback controllerCallback;
 
+  final FlingCallback flingCallback;
+
   @override
   DrawerControllerCustomState createState() => DrawerControllerCustomState();
 }
@@ -84,7 +87,6 @@ class DrawerControllerCustomState extends State<DrawerControllerCustom>
         vsync: this)
       ..addListener(_animationChanged)
       ..addStatusListener(_animationStatusChanged);
-    WidgetsBinding.instance.addPostFrameCallback((_) {});
   }
 
   @override
@@ -133,7 +135,7 @@ class DrawerControllerCustomState extends State<DrawerControllerCustom>
 
   void _handleHistoryEntryRemoved() {
     _historyEntry = null;
-    close();
+    flingClose();
   }
 
   void _handleDragDown(DragDownDetails details) {
@@ -144,9 +146,9 @@ class DrawerControllerCustomState extends State<DrawerControllerCustom>
   void _handleDragCancel() {
     if (_controller.isDismissed || _controller.isAnimating) return;
     if (_controller.value < (widget.width / widget.screenWidth) / 2) {
-      close();
+      flingClose();
     } else {
-      open();
+      flingOpen();
     }
   }
 
@@ -203,34 +205,97 @@ class DrawerControllerCustomState extends State<DrawerControllerCustom>
 
       switch (Directionality.of(context)) {
         case TextDirection.rtl:
-          _controller.fling(velocity: -visualVelocity);
+          // Stream.periodic(Duration(milliseconds: 5), (v) => v)
+          //     .take((widget.width ~/ widget.screenWidth))
+          //     .listen((count) {
+          //   print(count / 100);
+          //   _controller.value = count / 100;
+          // });
+          // _controller.fling(velocity: -visualVelocity);
+          if (details.velocity.pixelsPerSecond.dx < 0) {
+            flingOpen();
+          } else {
+            flingClose();
+          }
           break;
         case TextDirection.ltr:
-          _controller.fling(velocity: visualVelocity);
+          // _controller.fling(velocity: visualVelocity);
+          // Stream.periodic(Duration(milliseconds: 1), (v) => v)
+          //     .take(200)
+          //     .listen((count) {
+          //       print('listen');
+          //   _controller.value = details.velocity.pixelsPerSecond.dx > 0
+          //       ? -(count / 200)
+          //       : count / 200;
+          // });
+          if (details.velocity.pixelsPerSecond.dx < 0) {
+            flingOpen();
+          } else {
+            flingClose();
+          }
           break;
       }
     } else if (_controller.value < ((widget.width / widget.screenWidth) / 2)) {
-      close();
+      flingClose();
     } else {
-      open();
+      flingOpen();
     }
+  }
+
+  void flingClose() {
+    for (double i = (widget.width / widget.screenWidth); i >= 0.0; i -= 0.1) {
+      Future.delayed(_kBaseDelayDuration, () {
+        _controller.value = i;
+        if (widget.controllerCallback != null) {
+          widget.controllerCallback(_controller.value);
+        }
+      });
+    }
+    Future.delayed(_kBaseDelayDuration, () {
+      _controller.value = 0.0;
+      if (widget.controllerCallback != null) {
+        widget.controllerCallback(_controller.value);
+      }
+    });
+  }
+
+  void flingOpen() {
+    for (double i = _controller.value;
+        i <= (widget.width / widget.screenWidth);
+        i += 0.1) {
+      Future.delayed(_kBaseDelayDuration, () {
+        _controller.value = i;
+        if (widget.controllerCallback != null) {
+          widget.controllerCallback(_controller.value);
+        }
+      });
+    }
+    Future.delayed(_kBaseDelayDuration, () {
+      _controller.value = (widget.width / widget.screenWidth);
+      if (widget.controllerCallback != null) {
+        widget.controllerCallback(_controller.value);
+      }
+    });
   }
 
   /// Starts an animation to open the drawer.
   ///
   /// Typically called by [ScaffoldState.openDrawer].
-  void open() {
-    _controller.fling(velocity: 1.0);
-    if (widget.controllerCallback != null) widget.controllerCallback(1.0);
-    if (widget.drawerCallback != null) widget.drawerCallback(true);
-  }
+  // void open() {
+  //   _controller.fling(velocity: 1.0);
+  //   // Future.delayed(Duration(milliseconds: 240), () {
+  //   //   if (widget.controllerCallback != null)
+  //   widget.controllerCallback((widget.width / widget.screenWidth));
+  //   // });
+  //   if (widget.drawerCallback != null) widget.drawerCallback(true);
+  // }
 
   /// Starts an animation to close the drawer.
-  void close() {
-    _controller.fling(velocity: -1.0);
-    if (widget.controllerCallback != null) widget.controllerCallback(0.0);
-    if (widget.drawerCallback != null) widget.drawerCallback(false);
-  }
+  // void close() {
+  //   _controller.fling(velocity: -1.0);
+  //   if (widget.controllerCallback != null) widget.controllerCallback(0.0);
+  //   if (widget.drawerCallback != null) widget.drawerCallback(false);
+  // }
 
   final GlobalKey _gestureDetectorKey = GlobalKey();
 
@@ -278,23 +343,6 @@ class DrawerControllerCustomState extends State<DrawerControllerCustom>
         ),
       );
     } else {
-      // Container(
-      //     child: GestureDetector(
-      //     // On Android, the back button is used to dismiss a modal.
-      //     excludeFromSemantics:
-      //         defaultTargetPlatform == TargetPlatform.android,
-      //     onTap: close,
-      //     child: Semantics(
-      //       label: MaterialLocalizations.of(context)
-      //           ?.modalBarrierDismissLabel,
-      //       child: Container(
-      //         width: 0,
-      //         height: 0,
-      //         color: _color.evaluate(_controller),
-      //       ),
-      //     ),
-      //   ),
-      // ),
       return GestureDetector(
         key: _gestureDetectorKey,
         onHorizontalDragDown: _handleDragDown,
