@@ -7,79 +7,66 @@ import 'package:flutter/material.dart';
 const double _kEdgeDragWidth = 20.0;
 const double _kMinFlingVelocity = 365.0;
 const Duration _kBaseSettleDuration = Duration(milliseconds: 246);
-const Duration _kBaseDelayDuration = Duration(milliseconds: 30);
+ColorTween _color;
+Tween<double> _tween;
+Animation<double> _animationSlide;
+AnimationController _controller;
+AnimationController _controller2;
+LocalHistoryEntry _historyEntry;
+final FocusScopeNode _focusScopeNode = FocusScopeNode();
+double _mWidth = 0.0;
+double _mScreenWidth = 0.0;
 
-/// Signature for the callback that's called when a [DrawerControllerCustom] is
-/// opened or closed.
-typedef DrawerCallback = void Function(bool isOpened);
-typedef ControllerCallback = void Function(double value);
-typedef FlingCallback = void Function(double velocity);
+bool get drawerOpend {
+  if (_controller == null) return false;
+  return _controller.value == (_mWidth / _mScreenWidth);
+}
 
-/// Provides interactive behavior for [Drawer] widgets.
-///
-/// Rarely used directly. Drawer controllers are typically created automatically
-/// by [Scaffold] widgets.
-///
-/// The draw _controller provides the ability to open and close a drawer, either
-/// via an animation or via user interaction. When closed, the drawer collapses
-/// to a translucent gesture detector that can be used to listen for edge
-/// swipes.
-///
-/// See also:
-///
-///  * [Drawer], a container with the default width of a drawer.
-///  * [Scaffold.drawer], the [Scaffold] slot for showing a drawer.
-class DrawerControllerCustom extends StatefulWidget {
-  /// Creates a _controller for a [Drawer].
-  ///
-  /// Rarely used directly.ae.mgnlasdnthlmszdfmhn.,sfmgjnsxfh/nj,xd/f,hmjnd,.xfh/mj,x/fgh,/x,.hnZdhnsrn u sdru jrtyitdi kdty itijkws46uve56ub5iun5euinr67ir6i67ir
-  ///
-  /// The [child] argument must not be null and is typically a [Drawer].
-  const DrawerControllerCustom(
+void flingClose() {
+  if (_controller == null) return;
+  _tween.begin = _controller.value;
+  _tween.end = 0.0;
+  _controller2.forward(from: _controller.value);
+}
+
+void flingOpen() {
+  if (_controller == null) return;
+  _tween.begin = _controller.value;
+  _tween.end = (_mWidth / _mScreenWidth);
+  _controller2.forward(from: _controller.value);
+}
+
+class SlidingDrawer extends StatefulWidget {
+  const SlidingDrawer(
       {GlobalKey key,
       @required this.child,
       @required this.alignment,
-      this.controllerCallback,
-      this.drawerCallback,
-      this.flingCallback,
-      this.screenWidth,
+      @required this.screenWidth,
+      @required this.body,
       @required this.width})
       : assert(child != null),
         assert(alignment != null),
         super(key: key);
 
-  /// The widget below this widget in the tree.
-  ///
-  /// Typically a [Drawer].
   final Widget child;
   final double width;
   final double screenWidth;
 
-  /// The alignment of the [Drawer].
-  ///
-  /// This controls the direction in which the user should swipe to open and
-  /// close the drawer.
   final DrawerAlignment alignment;
 
-  /// Optional callback that is called when a [Drawer] is opened or closed.
-  final DrawerCallback drawerCallback;
-
-  final ControllerCallback controllerCallback;
-
-  final FlingCallback flingCallback;
+  final Widget body;
 
   @override
-  DrawerControllerCustomState createState() => DrawerControllerCustomState();
+  SlidingDrawerState createState() => SlidingDrawerState();
 }
 
-/// State for a [DrawerControllerCustom].
-///
-/// Typically used by a [Scaffold] to [open] and [close] the drawer.
-class DrawerControllerCustomState extends State<DrawerControllerCustom>
+class SlidingDrawerState extends State<SlidingDrawer>
     with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
+    _mWidth = widget.width;
+    _mScreenWidth = widget.screenWidth;
     _controller = AnimationController(
         lowerBound: 0.0,
         upperBound: (widget.width / widget.screenWidth),
@@ -99,10 +86,8 @@ class DrawerControllerCustomState extends State<DrawerControllerCustom>
         setState(() {
           _controller.value = _animationSlide.value;
         });
-        if (widget.controllerCallback != null) {
-          widget.controllerCallback(_controller.value);
-        }
       });
+    _color = ColorTween(begin: Colors.transparent, end: Colors.black38);
   }
 
   @override
@@ -118,13 +103,6 @@ class DrawerControllerCustomState extends State<DrawerControllerCustom>
       // The animation _controller's state is our build state, and it changed already.
     });
   }
-
-  Tween<double> _tween;
-  Animation<double> _animationSlide;
-  AnimationController _controller;
-  AnimationController _controller2;
-  LocalHistoryEntry _historyEntry;
-  final FocusScopeNode _focusScopeNode = FocusScopeNode();
 
   void _ensureHistoryEntry() {
     if (_historyEntry == null) {
@@ -175,8 +153,6 @@ class DrawerControllerCustomState extends State<DrawerControllerCustom>
   final GlobalKey _drawerKey = GlobalKey();
   final GlobalKey _parentKey = GlobalKey();
 
-  bool _previouslyOpened = false;
-
   void _move(DragUpdateDetails details) {
     double delta = details.primaryDelta / widget.width;
 
@@ -198,18 +174,6 @@ class DrawerControllerCustomState extends State<DrawerControllerCustom>
     }
 
     // print('move ==> ${_controller.value}');
-
-    if (widget.controllerCallback != null) {
-      widget.controllerCallback(_controller.value);
-    }
-
-    final bool opened =
-        _controller.value > ((widget.width / widget.screenWidth) / 2)
-            ? true
-            : false;
-    if (opened != _previouslyOpened && widget.drawerCallback != null)
-      widget.drawerCallback(opened);
-    _previouslyOpened = opened;
   }
 
   void _settle(DragEndDetails details) {
@@ -250,52 +214,6 @@ class DrawerControllerCustomState extends State<DrawerControllerCustom>
     }
   }
 
-  void flingClose() {
-    _tween.begin = 0.0;
-    _tween.end = _controller.value;
-    _controller2.reverse(from: 0.0);
-    print('tween.begin ==> ${_tween.begin}');
-    print('tween.end ==> ${_tween.end}');
-    // for (double i = (widget.width / widget.screenWidth); i >= 0.0; i -= 0.001) {
-    //   Future.delayed(_kBaseDelayDuration, () {
-    //     _controller.value = i;
-    //     if (widget.controllerCallback != null) {
-    //       widget.controllerCallback(_controller.value);
-    //     }
-    //   });
-    // }
-    // Future.delayed(_kBaseDelayDuration, () {
-    //   _controller.value = 0.0;
-    //   if (widget.controllerCallback != null) {
-    //     widget.controllerCallback(_controller.value);
-    //   }
-    // });
-  }
-
-  void flingOpen() {
-    _tween.begin = _controller.value;
-    _tween.end = (widget.width / widget.screenWidth);
-    _controller2.forward(from: _controller.value);
-    // print('tween.begin ==> ${_tween.begin}');
-    // print('tween.end ==> ${_tween.end}');
-    // for (double i = _controller.value;
-    //     i <= (widget.width / widget.screenWidth);
-    //     i += 0.001) {
-    //   Future.delayed(_kBaseDelayDuration, () {
-    //     _controller.value = i;
-    //     if (widget.controllerCallback != null) {
-    //       widget.controllerCallback(_controller.value);
-    //     }
-    //   });
-    // }
-    // Future.delayed(_kBaseDelayDuration, () {
-    //   _controller.value = (widget.width / widget.screenWidth);
-    //   if (widget.controllerCallback != null) {
-    //     widget.controllerCallback(_controller.value);
-    //   }
-    // });
-  }
-
   final GlobalKey _gestureDetectorKey = GlobalKey();
 
   AlignmentDirectional get _drawerOuterAlignment {
@@ -329,50 +247,79 @@ class DrawerControllerCustomState extends State<DrawerControllerCustom>
       dragAreaWidth = drawerIsStart ? padding.right : padding.left;
 
     dragAreaWidth = max(dragAreaWidth, _kEdgeDragWidth);
-    if (_controller.status == AnimationStatus.dismissed) {
-      return Align(
-        alignment: _drawerOuterAlignment,
-        child: GestureDetector(
-          key: _gestureDetectorKey,
-          onHorizontalDragUpdate: _move,
-          onHorizontalDragEnd: _settle,
-          behavior: HitTestBehavior.translucent,
-          excludeFromSemantics: true,
-          child: Container(
-            width: dragAreaWidth,
+    return Stack(
+      children: <Widget>[
+        Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: Align(
+            alignment: AlignmentDirectional.centerEnd,
+            widthFactor: 1.0 - _controller.value,
+            child: widget.body,
           ),
         ),
-      );
-    } else {
-      return GestureDetector(
-        key: _gestureDetectorKey,
-        onHorizontalDragDown: _handleDragDown,
-        onHorizontalDragUpdate: _move,
-        onHorizontalDragEnd: _settle,
-        onHorizontalDragCancel: _handleDragCancel,
-        excludeFromSemantics: true,
-        child: RepaintBoundary(
-          child: Align(
-            alignment: _drawerOuterAlignment,
-            child: Align(
-              key: _parentKey,
-              widthFactor: _controller.value,
-              alignment: _drawerInnerAlignment,
-              child: Align(
-                alignment: _drawerInnerAlignment,
-                child: RepaintBoundary(
-                  child: FocusScope(
-                    key: _drawerKey,
-                    node: _focusScopeNode,
-                    child: widget.child,
-                  ),
-                ),
+        GestureDetector(
+          onHorizontalDragDown: _handleDragDown,
+          onHorizontalDragUpdate: _move,
+          onHorizontalDragEnd: _settle,
+          onHorizontalDragCancel: _handleDragCancel,
+          // On Android, the back button is used to dismiss a modal.
+          excludeFromSemantics: defaultTargetPlatform == TargetPlatform.android,
+          onTap: flingClose,
+          child: BlockSemantics(
+            child: Semantics(
+              label:
+                  MaterialLocalizations.of(context)?.modalBarrierDismissLabel,
+              child: Container(
+                width: _controller.value == 0.0 ? 0.0 : null,
+                color: _color.evaluate(_controller),
               ),
             ),
           ),
         ),
-      );
-    }
+        _controller.status == AnimationStatus.dismissed
+            ? Align(
+                alignment: _drawerOuterAlignment,
+                child: GestureDetector(
+                  key: _gestureDetectorKey,
+                  onHorizontalDragUpdate: _move,
+                  onHorizontalDragEnd: _settle,
+                  behavior: HitTestBehavior.translucent,
+                  excludeFromSemantics: true,
+                  child: Container(
+                    width: dragAreaWidth,
+                  ),
+                ),
+              )
+            : GestureDetector(
+                key: _gestureDetectorKey,
+                onHorizontalDragDown: _handleDragDown,
+                onHorizontalDragUpdate: _move,
+                onHorizontalDragEnd: _settle,
+                onHorizontalDragCancel: _handleDragCancel,
+                excludeFromSemantics: true,
+                child: RepaintBoundary(
+                  child: Align(
+                    alignment: _drawerOuterAlignment,
+                    child: Align(
+                      key: _parentKey,
+                      widthFactor: _controller.value,
+                      alignment: _drawerInnerAlignment,
+                      child: Align(
+                        alignment: _drawerInnerAlignment,
+                        child: RepaintBoundary(
+                          child: FocusScope(
+                            key: _drawerKey,
+                            node: _focusScopeNode,
+                            child: widget.child,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+      ],
+    );
   }
 
   @override
