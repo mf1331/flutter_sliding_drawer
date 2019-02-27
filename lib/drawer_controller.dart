@@ -76,7 +76,7 @@ class DrawerControllerCustom extends StatefulWidget {
 ///
 /// Typically used by a [Scaffold] to [open] and [close] the drawer.
 class DrawerControllerCustomState extends State<DrawerControllerCustom>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
@@ -87,6 +87,22 @@ class DrawerControllerCustomState extends State<DrawerControllerCustom>
         vsync: this)
       ..addListener(_animationChanged)
       ..addStatusListener(_animationStatusChanged);
+
+    _controller2 =
+        AnimationController(duration: _kBaseSettleDuration, vsync: this);
+
+    _tween =
+        Tween<double>(begin: 0.0, end: (widget.width / widget.screenWidth));
+    _animationSlide = _tween.animate(_controller2)
+      ..addListener(() {
+        // print('_tweenSlide ==> ${_animationSlide.value}');
+        setState(() {
+          _controller.value = _animationSlide.value;
+        });
+        if (widget.controllerCallback != null) {
+          widget.controllerCallback(_controller.value);
+        }
+      });
   }
 
   @override
@@ -102,7 +118,10 @@ class DrawerControllerCustomState extends State<DrawerControllerCustom>
     });
   }
 
+  Tween<double> _tween;
+  Animation<double> _animationSlide;
   AnimationController _controller;
+  AnimationController _controller2;
   LocalHistoryEntry _historyEntry;
   final FocusScopeNode _focusScopeNode = FocusScopeNode();
 
@@ -177,6 +196,8 @@ class DrawerControllerCustomState extends State<DrawerControllerCustom>
         break;
     }
 
+    // print('move ==> ${_controller.value}');
+
     if (widget.controllerCallback != null) {
       widget.controllerCallback(_controller.value);
     }
@@ -204,7 +225,7 @@ class DrawerControllerCustomState extends State<DrawerControllerCustom>
       }
 
       switch (Directionality.of(context)) {
-        case TextDirection.rtl:         
+        case TextDirection.rtl:
           // _controller.fling(velocity: -visualVelocity);
           if (details.velocity.pixelsPerSecond.dx < 0) {
             flingOpen();
@@ -229,39 +250,49 @@ class DrawerControllerCustomState extends State<DrawerControllerCustom>
   }
 
   void flingClose() {
-    for (double i = (widget.width / widget.screenWidth); i >= 0.0; i -= 0.001) {
-      Future.delayed(_kBaseDelayDuration, () {
-        _controller.value = i;
-        if (widget.controllerCallback != null) {
-          widget.controllerCallback(_controller.value);
-        }
-      });
-    }
-    Future.delayed(_kBaseDelayDuration, () {
-      _controller.value = 0.0;
-      if (widget.controllerCallback != null) {
-        widget.controllerCallback(_controller.value);
-      }
-    });
+    _tween.begin = 0.0;
+    _tween.end = _controller.value;
+    _controller2.reverse(from: 0.0);
+    print('tween.begin ==> ${_tween.begin}');
+    print('tween.end ==> ${_tween.end}');
+    // for (double i = (widget.width / widget.screenWidth); i >= 0.0; i -= 0.001) {
+    //   Future.delayed(_kBaseDelayDuration, () {
+    //     _controller.value = i;
+    //     if (widget.controllerCallback != null) {
+    //       widget.controllerCallback(_controller.value);
+    //     }
+    //   });
+    // }
+    // Future.delayed(_kBaseDelayDuration, () {
+    //   _controller.value = 0.0;
+    //   if (widget.controllerCallback != null) {
+    //     widget.controllerCallback(_controller.value);
+    //   }
+    // });
   }
 
   void flingOpen() {
-    for (double i = _controller.value;
-        i <= (widget.width / widget.screenWidth);
-        i += 0.001) {
-      Future.delayed(_kBaseDelayDuration, () {
-        _controller.value = i;
-        if (widget.controllerCallback != null) {
-          widget.controllerCallback(_controller.value);
-        }
-      });
-    }
-    Future.delayed(_kBaseDelayDuration, () {
-      _controller.value = (widget.width / widget.screenWidth);
-      if (widget.controllerCallback != null) {
-        widget.controllerCallback(_controller.value);
-      }
-    });
+    _tween.begin = _controller.value;
+    _tween.end = (widget.width / widget.screenWidth);
+    _controller2.forward(from: _controller.value);
+    // print('tween.begin ==> ${_tween.begin}');
+    // print('tween.end ==> ${_tween.end}');
+    // for (double i = _controller.value;
+    //     i <= (widget.width / widget.screenWidth);
+    //     i += 0.001) {
+    //   Future.delayed(_kBaseDelayDuration, () {
+    //     _controller.value = i;
+    //     if (widget.controllerCallback != null) {
+    //       widget.controllerCallback(_controller.value);
+    //     }
+    //   });
+    // }
+    // Future.delayed(_kBaseDelayDuration, () {
+    //   _controller.value = (widget.width / widget.screenWidth);
+    //   if (widget.controllerCallback != null) {
+    //     widget.controllerCallback(_controller.value);
+    //   }
+    // });
   }
 
   /// Starts an animation to open the drawer.
@@ -325,7 +356,9 @@ class DrawerControllerCustomState extends State<DrawerControllerCustom>
           onHorizontalDragEnd: _settle,
           behavior: HitTestBehavior.translucent,
           excludeFromSemantics: true,
-          child: Container(width: dragAreaWidth,),
+          child: Container(
+            width: dragAreaWidth,
+          ),
         ),
       );
     } else {

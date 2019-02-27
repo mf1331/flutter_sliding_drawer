@@ -47,7 +47,7 @@ class _DrawerSlidingState extends State<DrawerSliding>
             setState(() {
               _value = value;
             });
-          },
+          },          
           alignment: widget.drawerAlignment,
           child: widget.slider,
         ),
