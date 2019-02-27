@@ -6,7 +6,8 @@ class DrawerSliding extends StatefulWidget {
       {Key key,
       @required this.slider,
       @required this.body,
-      @required this.sliderWidth})
+      @required this.sliderWidth,
+      this.drawerAlignment = DrawerAlignment.end})
       : super(key: key);
 
   final Widget slider;
@@ -14,6 +15,8 @@ class DrawerSliding extends StatefulWidget {
   final Widget body;
 
   final double sliderWidth;
+
+  final DrawerAlignment drawerAlignment;
 
   @override
   _DrawerSlidingState createState() => _DrawerSlidingState();
@@ -27,34 +30,28 @@ class _DrawerSlidingState extends State<DrawerSliding>
   Widget build(BuildContext context) {
     final sizeScreen = MediaQuery.of(context).size;
 
-    return Material(
-      child: Stack(
-        children: <Widget>[
-          Align(
-            alignment: AlignmentDirectional.centerStart,
-            child: Align(
-              alignment: AlignmentDirectional.centerEnd,
-              widthFactor: 1.0 - _value,
-              child: SizedBox(
-                width: double.infinity,
-                height: double.infinity,
-                child: widget.body,
-              ),
-            ),
+    return Stack(
+      children: <Widget>[
+        Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: Align(
+            alignment: AlignmentDirectional.centerEnd,
+            widthFactor: 1.0 - _value,
+            child: widget.body,
           ),
-          DrawerControllerCustom(
-            screenWidth: sizeScreen.width,
-            width: widget.sliderWidth,
-            controllerCallback: (value) {
-              setState(() {
-                _value = value;
-              });
-            },
-            alignment: DrawerAlignment.end,
-            child: widget.slider,
-          ),
-        ],
-      ),
+        ),
+        DrawerControllerCustom(
+          screenWidth: sizeScreen.width,
+          width: widget.sliderWidth,
+          controllerCallback: (value) {
+            setState(() {
+              _value = value;
+            });
+          },
+          alignment: widget.drawerAlignment,
+          child: widget.slider,
+        ),
+      ],
     );
   }
 }

@@ -204,13 +204,7 @@ class DrawerControllerCustomState extends State<DrawerControllerCustom>
       }
 
       switch (Directionality.of(context)) {
-        case TextDirection.rtl:
-          // Stream.periodic(Duration(milliseconds: 5), (v) => v)
-          //     .take((widget.width ~/ widget.screenWidth))
-          //     .listen((count) {
-          //   print(count / 100);
-          //   _controller.value = count / 100;
-          // });
+        case TextDirection.rtl:         
           // _controller.fling(velocity: -visualVelocity);
           if (details.velocity.pixelsPerSecond.dx < 0) {
             flingOpen();
@@ -220,14 +214,6 @@ class DrawerControllerCustomState extends State<DrawerControllerCustom>
           break;
         case TextDirection.ltr:
           // _controller.fling(velocity: visualVelocity);
-          // Stream.periodic(Duration(milliseconds: 1), (v) => v)
-          //     .take(200)
-          //     .listen((count) {
-          //       print('listen');
-          //   _controller.value = details.velocity.pixelsPerSecond.dx > 0
-          //       ? -(count / 200)
-          //       : count / 200;
-          // });
           if (details.velocity.pixelsPerSecond.dx < 0) {
             flingOpen();
           } else {
@@ -243,7 +229,7 @@ class DrawerControllerCustomState extends State<DrawerControllerCustom>
   }
 
   void flingClose() {
-    for (double i = (widget.width / widget.screenWidth); i >= 0.0; i -= 0.1) {
+    for (double i = (widget.width / widget.screenWidth); i >= 0.0; i -= 0.001) {
       Future.delayed(_kBaseDelayDuration, () {
         _controller.value = i;
         if (widget.controllerCallback != null) {
@@ -262,7 +248,7 @@ class DrawerControllerCustomState extends State<DrawerControllerCustom>
   void flingOpen() {
     for (double i = _controller.value;
         i <= (widget.width / widget.screenWidth);
-        i += 0.1) {
+        i += 0.001) {
       Future.delayed(_kBaseDelayDuration, () {
         _controller.value = i;
         if (widget.controllerCallback != null) {
@@ -339,7 +325,7 @@ class DrawerControllerCustomState extends State<DrawerControllerCustom>
           onHorizontalDragEnd: _settle,
           behavior: HitTestBehavior.translucent,
           excludeFromSemantics: true,
-          child: Container(width: dragAreaWidth),
+          child: Container(width: dragAreaWidth,),
         ),
       );
     } else {

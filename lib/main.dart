@@ -13,7 +13,16 @@ class MyApp extends StatelessWidget {
       ),
       home: DrawerSliding(
         sliderWidth: 250,
-        body: Container(),
+        body: Scaffold(
+          body: Container(
+            color: Colors.red,
+            width: double.infinity,
+            height: double.infinity,
+            child: Center(
+              child: Text('body'),
+            ),
+          ),
+        ),
         slider: Container(
           color: Colors.amber,
           width: 250,
