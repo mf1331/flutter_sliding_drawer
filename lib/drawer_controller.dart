@@ -109,6 +109,7 @@ class DrawerControllerCustomState extends State<DrawerControllerCustom>
   void dispose() {
     _historyEntry?.remove();
     _controller.dispose();
+    _controller2.dispose();
     super.dispose();
   }
 
@@ -294,25 +295,6 @@ class DrawerControllerCustomState extends State<DrawerControllerCustom>
     //   }
     // });
   }
-
-  /// Starts an animation to open the drawer.
-  ///
-  /// Typically called by [ScaffoldState.openDrawer].
-  // void open() {
-  //   _controller.fling(velocity: 1.0);
-  //   // Future.delayed(Duration(milliseconds: 240), () {
-  //   //   if (widget.controllerCallback != null)
-  //   widget.controllerCallback((widget.width / widget.screenWidth));
-  //   // });
-  //   if (widget.drawerCallback != null) widget.drawerCallback(true);
-  // }
-
-  /// Starts an animation to close the drawer.
-  // void close() {
-  //   _controller.fling(velocity: -1.0);
-  //   if (widget.controllerCallback != null) widget.controllerCallback(0.0);
-  //   if (widget.drawerCallback != null) widget.drawerCallback(false);
-  // }
 
   final GlobalKey _gestureDetectorKey = GlobalKey();
 
