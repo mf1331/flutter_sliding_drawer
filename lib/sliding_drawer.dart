@@ -156,7 +156,7 @@ class SlidingDrawerState extends State<SlidingDrawer>
   void _move(DragUpdateDetails details) {
     double delta = details.primaryDelta / widget.width;
 
-    switch (DrawerAlignment.end) {
+    switch (widget.alignment) {
       case DrawerAlignment.start:
         break;
       case DrawerAlignment.end:
@@ -250,9 +250,9 @@ class SlidingDrawerState extends State<SlidingDrawer>
     return Stack(
       children: <Widget>[
         Align(
-          alignment: AlignmentDirectional.centerStart,
+          alignment: AlignmentDirectional.centerEnd,
           child: Align(
-            alignment: AlignmentDirectional.centerEnd,
+            alignment: AlignmentDirectional.centerStart,
             widthFactor: 1.0 - _controller.value,
             child: widget.body,
           ),
